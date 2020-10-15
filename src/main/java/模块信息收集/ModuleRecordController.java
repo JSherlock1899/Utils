@@ -1,32 +1,20 @@
-package cn.yulintech.community.pro.controller;
+package æ¨¡å—ä¿¡æ¯æ”¶é›†;
 
-import cn.yulintech.community.pro.common.BaseResponse;
-import cn.yulintech.community.pro.common.PageResult;
-import cn.yulintech.community.pro.constant.Constant;
-import cn.yulintech.community.pro.enums.EnumModuleSubType;
-import cn.yulintech.community.pro.enums.EnumModuleType;
-import cn.yulintech.community.pro.model.ModuleRecord;
-import cn.yulintech.community.pro.model.SysModule;
-import cn.yulintech.community.pro.service.IdGeneratorService;
-import cn.yulintech.community.pro.service.ModuleRecordService;
-import cn.yulintech.community.pro.service.SysModuleService;
-import cn.yulintech.community.pro.service.impl.IdGeneratorServiceImpl;
-import cn.yulintech.community.pro.service.io.obj.ModuleTree;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.io.File;
-import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.net.JarURLConnection;
-import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -39,15 +27,12 @@ import java.util.stream.Stream;
 public class ModuleRecordController {
 
     @Resource
-    private  IdGeneratorService idGeneratorService;
-
-    @Resource
     private ModuleRecordService moduleRecordService;
 
     public  Map<String, String> getMap(String name) throws ClassNotFoundException {
         Map<String, String> record = new HashMap<>();
         Class clazz = Class.forName(name);
-        //»ñÈ¡Àà×¢½âÖĞµÄÏà¹ØĞÅÏ¢
+        //è·å–ç±»æ³¨è§£ä¸­çš„ç›¸å…³ä¿¡æ¯
         Annotation[] annotations = clazz.getAnnotations();
         RequestMapping annotation1 = null;
         Api annotation2 = null;
@@ -61,13 +46,13 @@ public class ModuleRecordController {
         }
         if (!StringUtils.isEmpty(annotation1) && !StringUtils.isEmpty(annotation2))
             record.put(annotation1.value()[0], annotation2.tags()[0]);
-        //±éÀúÀàÖĞµÄ·½·¨
+        //éå†ç±»ä¸­çš„æ–¹æ³•
         RequestMapping finalAnnotation = annotation1;
         Stream.of(clazz.getDeclaredMethods()).forEach(field -> {
             if(field != null){
-                //ÔÊĞí·ÃÎÊË½ÓĞ·½·¨
+                //å…è®¸è®¿é—®ç§æœ‰æ–¹æ³•
                 field.setAccessible(true);
-                //ÅĞ¶ÏÊÇ·ñÓĞPostMapping×¢½â»òÕßGetMapping×¢½â£¬ÈôÓĞÔòÈ¡³öÆäÖĞµÄvalue×÷ÎªMapµÄkeyÖµ
+                //åˆ¤æ–­æ˜¯å¦æœ‰PostMappingæ³¨è§£æˆ–è€…GetMappingæ³¨è§£ï¼Œè‹¥æœ‰åˆ™å–å‡ºå…¶ä¸­çš„valueä½œä¸ºMapçš„keyå€¼
                 PostMapping postMappingAnnotation = field.getAnnotation(PostMapping.class);
                 GetMapping getMappingAnnotation = field.getAnnotation(GetMapping.class);
                 RequestMapping requestMappingAnnotation = field.getAnnotation(RequestMapping.class);
@@ -82,13 +67,13 @@ public class ModuleRecordController {
                     if(requestMappingAnnotation.value().length != 0)
                         key = requestMappingAnnotation.value()[0];
                 }
-                //ÅĞ¶ÏÊÇ·ñÓĞApiOperation×¢½â,ÈôÓĞÔòÈ¡³öÆäÖĞµÄvalue×÷ÎªMapµÄvalue
+                //åˆ¤æ–­æ˜¯å¦æœ‰ApiOperationæ³¨è§£,è‹¥æœ‰åˆ™å–å‡ºå…¶ä¸­çš„valueä½œä¸ºMapçš„value
                 ApiOperation apiOperationAnnotation = field.getAnnotation(ApiOperation.class);
                 String value = null;
                 if (apiOperationAnnotation != null) {
                     value = apiOperationAnnotation.value();
                 }
-                //Èô´æÔÚkeyÖµÔò½«ÆäÌí¼Óµ½MapÖĞ
+                //è‹¥å­˜åœ¨keyå€¼åˆ™å°†å…¶æ·»åŠ åˆ°Mapä¸­
                 if (key != null) {
                     if(finalAnnotation != null)
                         record.put(finalAnnotation.value()[0] + key, value);
@@ -108,43 +93,44 @@ public class ModuleRecordController {
             try {
                 Map<String, String> helper = getMap(list.get(i));
                 String parentCode = null;
-                //sort×Ö¶Î
+                //sortå­—æ®µ
                 int sortNum = 1;
                 for (String key : helper.keySet()) {
                     SysModule sysModule = new SysModule();
-                    //Éú³É²¢ÉèÖÃÄ£¿é±àºÅ
-                    String moduleCode = idGeneratorService.generateCode(Constant.MODULE_TOP);
+                    //ç”Ÿæˆå¹¶è®¾ç½®æ¨¡å—ç¼–å·
+//                    String moduleCode = idGeneratorService.generateCode(Constant.MODULE_TOP);
+                    String moduleCode = "";
                     if (parentCode == null) {
                         parentCode = moduleCode;
                     }
                     sysModule.setModuleCode(moduleCode);
-                    //ÉèÖÃÄ£¿éÃû³Æ
+                    //è®¾ç½®æ¨¡å—åç§°
                     sysModule.setModuleName(helper.get(key));
-                    //ÉèÖÃÄ£¿é·ÖÀà£¬ÕâÀïÍ³Ò»Ä¬ÈÏÉèÖÃÎª00-Ó¦ÓÃ
+                    //è®¾ç½®æ¨¡å—åˆ†ç±»ï¼Œè¿™é‡Œç»Ÿä¸€é»˜è®¤è®¾ç½®ä¸º00-åº”ç”¨
                     sysModule.setModuleClass("00");
-                    //ÉèÖÃÄ£¿éÀàĞÍ£¬ÔİÊ±Í³Ò»ÉèÖÃÎª²Ù×÷
+                    //è®¾ç½®æ¨¡å—ç±»å‹ï¼Œæš‚æ—¶ç»Ÿä¸€è®¾ç½®ä¸ºæ“ä½œ
                     sysModule.setModuleType(EnumModuleType.MODULE_TYPE_OPR.getCode());
-                    //ÉèÖÃ²Ù×÷ÀàĞÍ
+                    //è®¾ç½®æ“ä½œç±»å‹
                     EnumModuleSubType moduleSubType = getModuleSubType(key);
                     if (moduleSubType == null)
                         sysModule.setModuleSubType("N");
                     else
                         sysModule.setModuleSubType(moduleSubType.getCode());
-                    //ÉèÖÃ¸¸Ä£¿é±àºÅ
+                    //è®¾ç½®çˆ¶æ¨¡å—ç¼–å·
                     sysModule.setParentCode(parentCode);
-                    //ÉèÖÃ¸ùÄ£¿é±àºÅ
+                    //è®¾ç½®æ ¹æ¨¡å—ç¼–å·
                     sysModule.setRootCode("MD1277958416202993666");
-                    //ÉèÖÃÊÇ·ñĞèÒªµÇÂ¼
+                    //è®¾ç½®æ˜¯å¦éœ€è¦ç™»å½•
                     sysModule.setNeedLogin("1");
-                    //ÉèÖÃÊÇ·ñĞèÒªÈ¨ÏŞĞ£Ñé
+                    //è®¾ç½®æ˜¯å¦éœ€è¦æƒé™æ ¡éªŒ
                     sysModule.setNeedVerify("0");
-                    //ÉèÖÃÅÅĞò×Ö¶Î
+                    //è®¾ç½®æ’åºå­—æ®µ
                     sysModule.setSort(sortNum++);
-                    //ÉèÖÃÄÚÈİ£¨¼´Â·¾¶£©
+                    //è®¾ç½®å†…å®¹ï¼ˆå³è·¯å¾„ï¼‰
                     sysModule.setContent(key);
-                    //ÉèÖÃ´´½¨ÈËÕËºÅ
+                    //è®¾ç½®åˆ›å»ºäººè´¦å·
                     sysModule.setCreateBy("admin");
-                    //ÉèÖÃ´´½¨Ê±¼ä
+                    //è®¾ç½®åˆ›å»ºæ—¶é—´
                     sysModule.setCreateTime(LocalDateTime.now());
                     res.add(sysModule);
                 }
@@ -163,11 +149,11 @@ public class ModuleRecordController {
         File[] files = new File(path)
                 .listFiles(file -> file.getName().endsWith(".class") || file.isDirectory());
         for(File file : files){
-            // ÎÄ¼ş¼Ğ£¬µİ¹é±éÀú£¬ÔİÊ¡ÂÔ
+            // æ–‡ä»¶å¤¹ï¼Œé€’å½’éå†ï¼Œæš‚çœç•¥
             if(file.isDirectory()){
                 continue;
             }
-            // Êä³öÀàÃû³Æ
+            // è¾“å‡ºç±»åç§°
             String className = packageName + "." + file.getName().replace(".class", "");
             res.add(className);
         }
@@ -175,7 +161,7 @@ public class ModuleRecordController {
     }
 
     /**
-     * »ñÈ¡²Ù×÷ÀàĞÍ
+     * è·å–æ“ä½œç±»å‹
      * @param key
      * @return
      */
@@ -205,7 +191,7 @@ public class ModuleRecordController {
     }
 
     @PostMapping("insertList")
-    public BaseResponse<Void> insertList(@RequestBody ModuleRecord moduleRecord) {
+    public BaseResponse<Void> insertList(@RequestBody @Valid CreateModuleRecordIn moduleRecord) {
         String path = moduleRecord.getPath();
         String packageName = moduleRecord.getPackageName();
         List<SysModule> sysModuleList = helper(path, packageName);

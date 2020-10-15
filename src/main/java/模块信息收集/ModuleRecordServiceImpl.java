@@ -1,9 +1,5 @@
-package cn.yulintech.community.pro.service.impl;
+package æ¨¡å—ä¿¡æ¯æ”¶é›†;
 
-import cn.yulintech.community.pro.mapper.ModuleRecordMapper;
-import cn.yulintech.community.pro.mapper.SysModuleMapper;
-import cn.yulintech.community.pro.model.SysModule;
-import cn.yulintech.community.pro.service.ModuleRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +14,7 @@ import java.util.List;
  * @date: 2020/10/13 15:12
  */
 @Service
-@Slf4j
+//@Slf4j
 public class ModuleRecordServiceImpl implements ModuleRecordService {
 
     @Autowired
@@ -26,22 +22,22 @@ public class ModuleRecordServiceImpl implements ModuleRecordService {
 
     @Override
     public void insertList(List<SysModule> list) {
-        log.info("list´óĞ¡Îª£º" + list.size());
+//        log.info("listå¤§å°ä¸ºï¼š" + list.size());
         Iterator<SysModule> iterator = list.iterator();
         while (iterator.hasNext()) {
             SysModule s = iterator.next();
-            log.info(s.toString());
-            //¸ÃÂ·¾¶ÒÑ´æÔÚ£¬ÒÆ³ı
+//            log.info(s.toString());
+            //è¯¥è·¯å¾„å·²å­˜åœ¨ï¼Œç§»é™¤
             if (verifyContentExist(s.getContent())) iterator.remove();
-            //ÉèÖÃÁÙÊ±µÄÄ£¿éÃû
+            //è®¾ç½®ä¸´æ—¶çš„æ¨¡å—å
             if (s.getModuleName() == null) s.setModuleName("temporary");
         }
-        log.info("list´óĞ¡Îª£º" + list.size());
+//        log.info("listå¤§å°ä¸ºï¼š" + list.size());
         try {
             moduleRecordMapper.insertList(list);
         } catch (Exception e) {
             e.printStackTrace();
-            log.info("==============================================");
+//            log.info("==============================================");
         }
     }
 
